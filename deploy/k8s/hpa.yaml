@@ -1,0 +1,28 @@
+# Autoscaling horizontal por CPU. Para uma métrica mais fiel à carga real
+# (ex.: requisições/segundo ou latência p99), troque por um HPA baseado em
+# métricas customizadas via Prometheus Adapter — CPU é o ponto de partida
+# mais simples e já cobre o caso comum de pico de tráfego.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: house-price-api
+  namespace: house-price-prediction
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: house-price-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300 # evita "flapping": não desce rápido demais após um pico
+    scaleUp:
+      stabilizationWindowSeconds: 0

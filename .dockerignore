@@ -1,0 +1,12 @@
+.venv
+__pycache__
+*.pyc
+.git
+.pytest_cache
+notebooks
+reports
+outputs
+data/raw/kc_house_data.csv
+data/raw/future_unseen_examples.csv
+*.ipynb
+.env

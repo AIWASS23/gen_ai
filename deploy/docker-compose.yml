@@ -1,0 +1,59 @@
+# Stack local/produção mínima: API + Redis.
+#
+# Uso (a partir da raiz do repositório):
+#   docker compose -f deploy/docker-compose.yml up --build
+#
+# Para incluir um Langfuse self-hosted completo, combine com o overlay:
+#   docker compose -f deploy/docker-compose.yml -f deploy/docker-compose.langfuse.yml \
+#     --profile observability up --build
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: house-price-api:local
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENVIRONMENT: production
+      APP_REDIS_URL: redis://redis:6379/0
+      APP_CACHE_ENABLED: "true"
+      APP_OBSERVABILITY_ENABLED: ${APP_OBSERVABILITY_ENABLED:-false}
+      APP_LANGFUSE_PUBLIC_KEY: ${APP_LANGFUSE_PUBLIC_KEY:-}
+      APP_LANGFUSE_SECRET_KEY: ${APP_LANGFUSE_SECRET_KEY:-}
+      APP_LANGFUSE_HOST: ${APP_LANGFUSE_HOST:-https://cloud.langfuse.com}
+      APP_ADMIN_API_KEY: ${APP_ADMIN_API_KEY:-}
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8000/health/live"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    networks:
+      - house-price-net
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - house-price-net
+
+networks:
+  house-price-net:
+    driver: bridge
+
+volumes:
+  redis_data:

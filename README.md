@@ -22,10 +22,15 @@ src/predict.py                gera previsões (ponto + faixa p10-p90) para data/
 models/                      modelo final (model.joblib), modelos de quantil (quantile_lower/upper.joblib) e métricas
 reports/                     gráficos gerados pela EDA e pelo treino
 outputs/future_predictions.csv previsões geradas para os imóveis sem preço (com faixa de preço)
+deploy/                      implementação real da API de serving (não só o desenho) — ver deploy/README.md
+  api/                          FastAPI, POO/tipado: routers, services (model registry, cache, observabilidade), schemas
+  Dockerfile, docker-compose.yml  imagem de serving + Redis, testados de ponta a ponta
+  k8s/                          manifests Kubernetes (Deployment, HPA, Ingress, Redis)
+  tests/                         testes de integração da API (pytest)
 docs/
   CHALLENGE.md                enunciado original do desafio
   model.md                    variáveis importantes, escolha do modelo e estratégia de generalização
-  deploy_strategy.md          arquitetura proposta de deploy em produção (com diagrama)
+  deploy_strategy.md          arquitetura de deploy em produção (com diagrama) — camada de serving/monitoramento já implementada em deploy/
   continuous_learning.md      como o modelo aprenderia com novos dados ao longo do tempo
   stakeholder_communication.md  como os resultados seriam comunicados a um público de negócio
 ```
@@ -62,7 +67,8 @@ python -m src.predict
 |---|---|
 | Análise e entendimento dos dados | [`notebooks/01_eda.ipynb`](notebooks/01_eda.ipynb) |
 | Variáveis importantes, escolha do modelo, generalização | [`docs/model.md`](docs/model.md) |
-| Estratégia de deploy | [`docs/deploy_strategy.md`](docs/deploy_strategy.md) |
+| Estratégia de deploy (desenho) | [`docs/deploy_strategy.md`](docs/deploy_strategy.md) |
+| Estratégia de deploy (implementação: API, Redis, Langfuse, Docker, K8s) | [`deploy/README.md`](deploy/README.md) |
 | Aprendizado contínuo | [`docs/continuous_learning.md`](docs/continuous_learning.md) |
 | Comunicação com stakeholders | [`docs/stakeholder_communication.md`](docs/stakeholder_communication.md) |
 
@@ -97,12 +103,31 @@ python -m src.predict
   `requirements.txt` com versões fixas (`==`), garantindo que o ambiente seja
   reprodutível sem depender de um lockfile.
 
+## API de serving (implementada)
+
+Além do desenho em `docs/deploy_strategy.md`, este repositório inclui uma
+**implementação real e testada** da camada de serving em [`deploy/`](deploy/):
+API FastAPI orientada a objetos e tipada, cache Redis, observabilidade via
+Langfuse, Dockerfile + docker-compose, e manifests Kubernetes. Ver
+[`deploy/README.md`](deploy/README.md) para arquitetura, como rodar (local,
+Docker, K8s) e a tabela honesta do que é implementação de referência vs. o
+que uma stack de produção madura trocaria.
+
+```bash
+docker compose -f deploy/docker-compose.yml up --build
+curl -X POST http://localhost:8000/v1/predictions -H "Content-Type: application/json" -d '{
+  "houses": [{"bedrooms":4,"bathrooms":1.0,"sqft_living":1680,"sqft_lot":5043,"floors":1.5,
+  "waterfront":0,"view":0,"condition":4,"grade":6,"sqft_above":1680,"sqft_basement":0,
+  "yr_built":1911,"yr_renovated":0,"zipcode":98118,"lat":47.5354,"long":-122.273,
+  "sqft_living15":1560,"sqft_lot15":5765}]
+}'
+```
+
 ## Limitações e próximos passos (primeira versão)
 
 Esta é a primeira versão da solução. Próximos passos naturais, não incluídos
-aqui por escopo: testes automatizados do pipeline de dados/treino, uma API de
-serving real (desenhada, não implementada, em `docs/deploy_strategy.md`),
-recalibração dos intervalos de previsão (a cobertura empírica hoje é 72%,
-abaixo do 80% nominal — ver `docs/model.md`) e uma segunda rodada de feature
-engineering (ex.: distância a pontos de interesse, dados de mercado mais
-recentes que os de 2014–2015).
+aqui por escopo: testes automatizados do pipeline de dados/treino (`src/`;
+a API em `deploy/` já tem sua própria suíte), recalibração dos intervalos de
+previsão (a cobertura empírica hoje é 72%, abaixo do 80% nominal — ver
+`docs/model.md`), e uma segunda rodada de feature engineering (ex.: distância
+a pontos de interesse, dados de mercado mais recentes que os de 2014–2015).

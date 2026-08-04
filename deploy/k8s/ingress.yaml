@@ -1,0 +1,28 @@
+# Assume um NGINX Ingress Controller e (opcionalmente) cert-manager para
+# TLS automático via Let's Encrypt. Ajuste `ingressClassName`,
+# `spec.tls.hosts` e o host da regra para o domínio real do serviço.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: house-price-api
+  namespace: house-price-prediction
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - house-price-api.example.com
+      secretName: house-price-api-tls
+  rules:
+    - host: house-price-api.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: house-price-api
+                port:
+                  number: 80

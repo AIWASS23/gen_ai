@@ -1,0 +1,29 @@
+# Uso:
+#   kubectl apply -k deploy/k8s/
+#
+# Antes de aplicar em um cluster real:
+#   1. Ajuste a imagem (abaixo) para o registry onde a imagem foi publicada.
+#   2. Preencha deploy/k8s/secret.yaml com valores reais (ou gere o Secret
+#      fora deste repositório — ver comentário no próprio arquivo).
+#   3. Ajuste deploy/k8s/ingress.yaml com o domínio real.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: house-price-prediction
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - deployment.yaml
+  - service.yaml
+  - hpa.yaml
+  - redis-pvc.yaml
+  - redis-deployment.yaml
+  - redis-service.yaml
+  - ingress.yaml
+
+images:
+  - name: house-price-api
+    newName: house-price-api # troque por ex.: ghcr.io/seu-usuario/house-price-api
+    newTag: latest

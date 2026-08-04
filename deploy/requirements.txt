@@ -1,0 +1,33 @@
+# Dependências da API de serving (produção). Deliberadamente separado do
+# requirements.txt da raiz (que cobre EDA/treino: jupyter, matplotlib,
+# seaborn, ...) para manter a imagem Docker de serving enxuta.
+#
+# scikit-learn/xgboost/lightgbm são necessários para desserializar o
+# pipeline salvo em models/model.joblib (contém estimadores dessas libs) —
+# ver models/metrics.json -> "best_model" para o que está realmente em uso.
+#
+# IMPORTANTE: se um retreino futuro (`src/train.py`) escolher CatBoost como
+# melhor modelo, este arquivo precisa ganhar `catboost` de volta e a imagem
+# Docker precisa ser reconstruída antes do deploy — não mantemos catboost
+# aqui "por via das dúvidas" porque ele traz matplotlib+plotly+graphviz como
+# dependências obrigatórias (~120MB), e o objetivo desta lista é espelhar
+# exatamente o que o artefato atualmente publicado precisa para rodar.
+fastapi==0.141.1
+uvicorn[standard]==0.52.1
+pydantic==2.13.4
+pydantic-settings==2.14.2
+redis==8.1.0
+langfuse==4.14.2
+scikit-learn==1.9.0
+# xgboost traz nvidia-nccl-cu12 (~400MB) como dependência obrigatória no
+# Linux, usada só para treino multi-GPU — irrelevante para inferência
+# CPU-only. O Dockerfile instala xgboost com `--no-deps` e garante
+# numpy/scipy (já presentes via scikit-learn/pandas) para evitar esse peso
+# morto na imagem. Ao instalar fora do Docker (`pip install -r
+# requirements.txt` puro), o nvidia-nccl-cu12 será baixado normalmente.
+xgboost==3.3.0
+lightgbm==4.7.0
+joblib==1.5.3
+numpy==2.5.1
+pandas==3.0.5
+python-json-logger==4.1.0

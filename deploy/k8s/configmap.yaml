@@ -1,0 +1,18 @@
+# Configuração não-sensível da API (ver deploy/api/config.py:Settings para
+# o significado de cada variável). Segredos (chaves Langfuse, admin API key,
+# senha do Redis se houver) vão em secret.yaml, nunca aqui.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: house-price-api-config
+  namespace: house-price-prediction
+data:
+  APP_ENVIRONMENT: "production"
+  APP_LOG_LEVEL: "INFO"
+  APP_CACHE_ENABLED: "true"
+  APP_REDIS_URL: "redis://redis:6379/0"
+  APP_CACHE_TTL_SECONDS: "3600"
+  APP_MAX_BATCH_SIZE: "500"
+  APP_OBSERVABILITY_ENABLED: "false"
+  APP_LANGFUSE_HOST: "https://cloud.langfuse.com"
+  APP_CORS_ALLOW_ORIGINS: '["*"]'

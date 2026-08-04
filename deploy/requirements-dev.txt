@@ -1,0 +1,5 @@
+# Dependências extras só para rodar a suíte de testes da API
+# (deploy/tests/). Não vão para a imagem Docker de produção.
+-r requirements.txt
+pytest==9.1.1
+httpx==0.28.1
