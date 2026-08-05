@@ -19,6 +19,8 @@ notebooks/01_eda.ipynb       análise exploratória (também disponível como sc
 src/data.py                  carregamento, limpeza, engenharia de features e merge com dados demográficos
 src/train.py                 comparação de 16 modelos (não-ensemble + ensemble), tuning, modelos de quantil e serialização
 src/predict.py                gera previsões (ponto + faixa p10-p90) para data/raw/future_unseen_examples.csv
+src/continuous_learning.py    retreino real: split out-of-time, gate de qualidade, promoção/rollback, hot-reload da API
+tests/                        testes automatizados de src/ (pytest) — split temporal, gate, backup/rollback
 models/                      modelo final (model.joblib), modelos de quantil (quantile_lower/upper.joblib) e métricas
 reports/                     gráficos gerados pela EDA e pelo treino
 outputs/future_predictions.csv previsões geradas para os imóveis sem preço (com faixa de preço)
@@ -69,7 +71,7 @@ python -m src.predict
 | Variáveis importantes, escolha do modelo, generalização | [`docs/model.md`](docs/model.md) |
 | Estratégia de deploy (desenho) | [`docs/deploy_strategy.md`](docs/deploy_strategy.md) |
 | Estratégia de deploy (implementação: API, Redis, Langfuse, Docker, K8s) | [`deploy/README.md`](deploy/README.md) |
-| Aprendizado contínuo | [`docs/continuous_learning.md`](docs/continuous_learning.md) |
+| Aprendizado contínuo (desenho + implementação: retreino, gate, rollback) | [`docs/continuous_learning.md`](docs/continuous_learning.md) |
 | Comunicação com stakeholders | [`docs/stakeholder_communication.md`](docs/stakeholder_communication.md) |
 
 ## Principais decisões e por que
@@ -123,11 +125,28 @@ curl -X POST http://localhost:8000/v1/predictions -H "Content-Type: application/
 }'
 ```
 
+## Aprendizado contínuo (implementado)
+
+Além do desenho em `docs/continuous_learning.md`, o ciclo de retreino está
+implementado em [`src/continuous_learning.py`](src/continuous_learning.py) e
+validado com dados e modelo reais: split out-of-time (não aleatório), gate
+de qualidade automático (promove só se o desafiante não piorar o RMSE além
+de uma tolerância configurável), backup automático antes de promover, e
+`--rollback`. Achado real ao validar: comparar o desafiante contra o RMSE
+*gravado* do campeão é injusto (splits diferentes, e o campeão deste repo viu
+100% do histórico) — corrigido avaliando o campeão na mesma janela
+out-of-time do desafiante antes de decidir. Detalhes, comandos reprodutíveis
+e os números da validação em [`docs/continuous_learning.md`](docs/continuous_learning.md#6-validação-real-não-só-desenho).
+
+```bash
+uv run python -m src.continuous_learning --cutoff-date 2015-04-15 --dry-run
+```
+
 ## Limitações e próximos passos (primeira versão)
 
 Esta é a primeira versão da solução. Próximos passos naturais, não incluídos
-aqui por escopo: testes automatizados do pipeline de dados/treino (`src/`;
-a API em `deploy/` já tem sua própria suíte), recalibração dos intervalos de
-previsão (a cobertura empírica hoje é 72%, abaixo do 80% nominal — ver
-`docs/model.md`), e uma segunda rodada de feature engineering (ex.: distância
-a pontos de interesse, dados de mercado mais recentes que os de 2014–2015).
+aqui por escopo: shadow deployment/canário real para o retreino (o `--dry-run`
+é o equivalente mais próximo hoje), recalibração dos intervalos de previsão
+(a cobertura empírica hoje é 72%, abaixo do 80% nominal — ver `docs/model.md`),
+e uma segunda rodada de feature engineering (ex.: distância a pontos de
+interesse, dados de mercado mais recentes que os de 2014–2015).

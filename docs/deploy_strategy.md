@@ -133,20 +133,6 @@ flowchart TB
   integração de código): trace e scores (`latency_ms`, `cache_hit_rate`)
   conferidos via API do Langfuse batendo com a resposta HTTP da previsão —
   ver `deploy/README.md`.
-- **Monitoramento de drift de dados** (desenho, não implementado): comparar a
-  distribuição das features de entrada em produção com a distribuição vista
-  no treino (ex.: `evidently`, KS-test por feature). Um CEP novo ou uma
-  mudança no perfil de imóveis avaliados é um sinal de alerta. As traces do
-  Langfuse já capturam os inputs necessários para isso — falta o job que
-  analisa a distribuição agregada.
-- **Monitoramento de performance real** (desenho, não implementado): como o
-  preço de venda real de um imóvel só é conhecido semanas/meses depois da
-  predição, o pipeline deveria religar `id`/endereço da predição com o
-  preço de venda realizado assim que disponível, para recalcular RMSE/MAE
-  em produção — não apenas confiar nas métricas de treino.
-- Dashboards e alertas: o Langfuse já oferece visualização de latência/custo/
-  volume de traces pronta; alertas de negócio (drift, erro real acima do
-  limite) ainda dependem do job de monitoramento de performance acima.
 
 ### 5. Versionamento
 - **Código**: Git + tags de release.

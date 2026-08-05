@@ -83,6 +83,21 @@ def get_feature_columns(df: pd.DataFrame) -> list[str]:
     return [c for c in df.columns if c not in NON_FEATURE_COLUMNS]
 
 
+def load_labeled_frame() -> pd.DataFrame:
+    """Retorna o dataframe completo (id, date, price, features) já limpo,
+    com engenharia de features e merge demográfico aplicados — sem
+    descartar `date`/`id`.
+
+    Base tanto para `load_training_frame` (treino "de uma vez", ignora
+    `date`) quanto para `src/continuous_learning.py` (retreino), que
+    precisa de `date` para fazer splits temporais (out-of-time).
+    """
+    houses = load_house_sales()
+    houses = clean_house_sales(houses)
+    demographics = load_demographics()
+    return build_feature_frame(houses, demographics)
+
+
 def load_training_frame() -> tuple[pd.DataFrame, pd.Series, pd.Series]:
     """Retorna (X, y, groups) prontos para split/treino.
 
@@ -90,11 +105,7 @@ def load_training_frame() -> tuple[pd.DataFrame, pd.Series, pd.Series]:
     mais de uma vez na janela do dataset) apareça simultaneamente em treino e
     teste.
     """
-    houses = load_house_sales()
-    houses = clean_house_sales(houses)
-    demographics = load_demographics()
-
-    full = build_feature_frame(houses, demographics)
+    full = load_labeled_frame()
     feature_cols = get_feature_columns(full)
 
     X = full[feature_cols]

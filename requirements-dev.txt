@@ -1,0 +1,5 @@
+# Dependências extras só para rodar a suíte de testes de src/
+# (tests/) e do notebook de EDA. Não fazem parte do requirements.txt de
+# treino/EDA nem do deploy/requirements.txt de serving.
+-r requirements.txt
+pytest==9.1.1
