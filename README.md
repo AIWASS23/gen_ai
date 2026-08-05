@@ -24,6 +24,7 @@ tests/                        testes automatizados de src/ (pytest) — split te
 models/                      modelo final (model.joblib), modelos de quantil (quantile_lower/upper.joblib) e métricas
 reports/                     gráficos gerados pela EDA e pelo treino
 outputs/future_predictions.csv previsões geradas para os imóveis sem preço (com faixa de preço)
+presentation/                apresentação (.pptx) com os 5 entregáveis do desafio — ver presentation/desafio_data_science.pptx
 deploy/                      implementação real da API de serving (não só o desenho) — ver deploy/README.md
   api/                          FastAPI, POO/tipado: routers, services (model registry, cache, observabilidade), schemas
   Dockerfile, docker-compose.yml  imagem de serving + Redis, testados de ponta a ponta
@@ -142,7 +143,7 @@ e os números da validação em [`docs/continuous_learning.md`](docs/continuous_
 uv run python -m src.continuous_learning --cutoff-date 2015-04-15 --dry-run
 ```
 
-## Limitações e próximos passos (primeira versão)
+## Limitações e próximos passos
 
 Esta é a primeira versão da solução. Próximos passos naturais, não incluídos
 aqui por escopo: shadow deployment/canário real para o retreino (o `--dry-run`
